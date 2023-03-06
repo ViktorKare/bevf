@@ -41,33 +41,9 @@ class Fusion_Block(nn.Module):
             nn.Conv2d(lic, lic, kernel_size=1, stride=1),
             nn.Sigmoid()
         )
-        self.reduc1 = ConvModule(
-                    licimc,
-                    mid1,
-                    3,
-                    padding=1,
-                    conv_cfg=None,
-                    norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                    act_cfg=dict(type='ReLU'),
-                    inplace=False)
-        self.reduc2 = ConvModule(
-                    mid1,
-                    mid2,
-                    3,
-                    padding=1,
-                    conv_cfg=None,
-                    norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                    act_cfg=dict(type='ReLU'),
-                    inplace=False)
-        self.reduc3 = ConvModule(
-                    mid2,
-                    lic,
-                    3,
-                    padding=1,
-                    conv_cfg=None,
-                    norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                    act_cfg=dict(type='ReLU'),
-                    inplace=False)
+        self.reduc1 = ConvModule(licimc, mid1, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduc2 = ConvModule(mid1, mid2, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduc3 = ConvModule(mid2, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
         
     def forward(self, feats):
         feats = self.reduc1(feats)
