@@ -9,13 +9,26 @@ from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations
 import os
 
+#From BEVFusion: https://github.com/mit-han-lab/bevfusion
 from .loading_utils import reduce_LiDAR_beams
+
+
+
+
+
 
 # BEAMS HERE!!!
 use_reduced_beams = True
 beams = 32
+# MISSALIGNMENT HERE!!!
 alig_miss = True
 translation_aug = np.array([0.0, 0, 0])
+
+
+
+
+
+
 
 @PIPELINES.register_module()
 class MyResize(object):
