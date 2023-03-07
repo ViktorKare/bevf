@@ -18,11 +18,11 @@ from .loading_utils import reduce_LiDAR_beams
 
 
 # BEAMS HERE!!!
-use_reduced_beams = True
+use_reduced_beams = False
 beams = 32
 # MISSALIGNMENT HERE!!!
-alig_miss = True
-translation_aug = np.array([0.0, 0, 0])
+alig_miss = False
+translation_aug = np.array([0, 0, 0])
 
 
 

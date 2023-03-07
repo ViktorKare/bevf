@@ -6,6 +6,23 @@ This is a fork of [paper](https://arxiv.org/abs/2205.13790)
 
 Please refer to [getting_started.md](docs/getting_started.md) for installation of mmdet3d.
 
+```
+conda create -n bevf python=3.8 -y
+conda activate bevf
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install openmim
+mim install mmcv-full==1.4.0
+mim install mmdet==2.11.0
+cd bevf
+pip install -e .
+
+pip install timm
+pip install setuptools==59.5.0
+
+```
+
+
+
 Recommended environments:
 
 ```shell
@@ -16,6 +33,7 @@ mmdet3d==0.11.0
 numpy==1.19.2
 torch==1.7.0
 torchvision==0.8.0
+
 ```
 
 **Benchmark Evaluation and Training**

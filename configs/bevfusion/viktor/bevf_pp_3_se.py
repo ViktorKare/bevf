@@ -7,6 +7,7 @@ final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
+total_epochs = 3
 model = dict(
     type='BEVF_FasterRCNN_mob',
     freeze_img=True,

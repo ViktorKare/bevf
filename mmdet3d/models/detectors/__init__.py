@@ -9,7 +9,7 @@ from .bevf_transfusion import BEVF_TransFusion
 from .bevf_faster_rcnn_aug import BEVF_FasterRCNN_Aug
 from .bevf_transfusion_aug import BEVF_TransFusion_Aug
 from .bevf_faster_rcnn_mob import BEVF_FasterRCNN_mob
-from .bevf_faster_rcnn_cross import BEVF_FasterRCNN_cross
+#from .bevf_faster_rcnn_cross import BEVF_FasterRCNN_cross
 __all__ = [
     'Base3DDetector',
     'MVXTwoStageDetector',
@@ -21,6 +21,6 @@ __all__ = [
     'BEVF_TransFusion',
     'BEVF_FasterRCNN_Aug',
     'BEVF_TransFusion_Aug',
-    'BEVF_FasterRCNN_mob',
-    'BEVF_FasterRCNN_cross'
+    'BEVF_FasterRCNN_mob'#,
+    #'BEVF_FasterRCNN_cross'
 ]

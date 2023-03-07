@@ -87,7 +87,8 @@ class BEVF_FasterRCNN_mob(MVXFasterRCNN):
         if lc_fusion:
             self.seblock = SE_Block(lic)
             if se:
-                self.fusion_block = Fusion_Block(lic+imc,512,384,lic,)
+                self.fusion_block = Fusion_Block(lic+imc,512,384,lic)
+                #self.fusion_block = Fusion_Block(lic+imc,500,400,lic)
             else:
                 self.reduc_conv = ConvModule(
                     lic + imc,

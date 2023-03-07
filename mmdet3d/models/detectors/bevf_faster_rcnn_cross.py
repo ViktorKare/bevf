@@ -15,7 +15,7 @@ import torch.nn as nn
 
 
 # From https://github.com/rishikksh20/CrossViT-pytorch
-from mmdet3d.models.utils import CrossAttention, PreNorm
+from mmdet3d.models.utils.module import CrossAttention, PreNorm
 
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
