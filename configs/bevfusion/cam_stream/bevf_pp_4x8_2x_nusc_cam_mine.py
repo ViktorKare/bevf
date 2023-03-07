@@ -27,12 +27,13 @@ model = dict(
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
-        style='caffe'),
+        with_cp=True,
+        style='pytorch'),
     img_neck=dict(
         type='FPNC',
         final_dim=final_dim,
         downsample=downsample, 
-        in_channels=[256, 96, 1, 1],
+        in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         use_adp=True,
         num_outs=5),
@@ -106,7 +107,7 @@ model = dict(
 
 data = dict(
     samples_per_gpu=1,
-    workers_per_gpu=1,)
+    workers_per_gpu=2,)
 
-#load_img_from = 'work_dirs/mask_rcnn_dbswin-t_fpn_3x_nuim_cocopre/epoch_36.pth'
+load_img_from = 'work_dirs/mask_rcnn_dbswin-t_fpn_3x_nuim_cocopre/epoch_36.pth'
 # fp16 = dict(loss_scale=32.0)

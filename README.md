@@ -54,16 +54,6 @@ Please refer to [data_preparation.md](docs/data_preparation.md) to prepare the d
 ### evaluation example for bevfusion-pointpillar
 ./tools/dist_test.sh configs/bevfusion/bevf_pp_2x8_1x_nusc.py ./work_dirs/bevfusion_pp.pth 8 --eval bbox
 
-### training example for sota Results with BEV_augs
-git checkout dev_aug
-# first train camera stream
-./tools/dist_train.sh configs/bevfusion/cam_stream/bevf_tf_4x8_20e_nusc_cam_lr.py 8
-# then train LiDAR stream
-./tools/dist_train.sh configs/bevfusion/lidar_stream/transfusion_nusc_voxel_L.py 8
-# then train BEVFusion
-./tools/dist_train.sh configs/bevfusion/bevf_tf_4x8_10e_nusc_aug.py 8
-
-
 ```
 
 ## Acknowlegement

@@ -112,8 +112,8 @@ model = dict(
 
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,)
+    samples_per_gpu=1,
+    workers_per_gpu=2,)
 
 load_img_from = 'work_dirs/mask_rcnn_dbswin-t_fpn_3x_nuim_cocopre/epoch_36.pth'
 # fp16 = dict(loss_scale=32.0)
