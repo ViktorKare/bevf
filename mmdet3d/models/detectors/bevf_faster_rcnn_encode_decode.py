@@ -21,8 +21,8 @@ class Fusion_Block(nn.Module):
         super().__init__()
         seld.reduce_encode_decode = nn.Sequential(
         self.reduc = ConvModule(lic+imc, lic, 3, padding=1,conv_cfg=dict(type="Conv2d", bias=False),norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False),
-        self.encode = SECOND(in_channels=lic,out_channels=[64, 256], layer_nums=[5, 5], layer_strides=[1, 2]),
-        self.decode = SECONDFPN(in_channels=[64, 256], out_channels=[256, 256], upsample_strides=[1, 2])
+        self.encode = SECOND(in_channels=lic,out_channels=[128, 256], layer_nums=[5, 5], layer_strides=[1, 2]),
+        self.decode = SECONDFPN(in_channels=[128, 256], out_channels=[256, 256], upsample_strides=[1, 2])
         )
         
     def forward(self, img_bev_feat, pts_feats):
