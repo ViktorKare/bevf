@@ -10,24 +10,25 @@ from mmdet.datasets.pipelines import LoadAnnotations
 import os
 
 #From BEVFusion: https://github.com/mit-han-lab/bevfusion
-from .loading_utils import reduce_LiDAR_beams
+from .loading_utils import reduce_LiDAR_beams, euler_from_quaternion, get_quaternion_from_euler
 
 
-
-
-
-
-# BEAMS
+    """Layer reduction (beams)
+    Default 32 on NuScenes
+    """
 use_reduced_beams = False
 beams = 1
 
-# MISALIGNMENT
+
+    """Misalignment
+    Random noise to camera2lidar transfer matrix. Translation in xyz. 
+    Rotation in 
+    """
 align_mis = False
 #Offset in meters, applies randomly to all cams x y z.
-align_mis_trans = [-0.05, 0.05]#m    #None   
+align_mis_trans = [-0.05, 0.05]#m               #None   
 #Offset in degrees, applies randomly to all cams yaw.
-align_mis_rots = None #[-3, 3]#align_mis_rots
-
+align_mis_rots = [-3, 3]#Degrees                #None
 
 
 @PIPELINES.register_module()
@@ -533,17 +534,18 @@ class LoadMultiViewImageFromFiles(object):
             seed_int = int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**32 - 1)
             np.random.seed(seed_int)
             for i, cam in enumerate(results['caminfo']):
-                #xyz = cam['sensor2lidar_translation']
-                #rots = cam['sensor2lidar_rotation']
                 if align_mis_trans is not None:
                     offset_xyz = np.random.uniform(low=align_mis_trans[0], high=align_mis_trans[1], size=(3,))
                     results['caminfo'][i]['sensor2lidar_translation'] += offset_xyz
                 if align_mis_rots is not None:
-                    offset_rots = np.zeros(4)
+                    offset_rots = np.zeros(3)
                     offset_yaw = np.random.uniform(low=align_mis_rots[0], high=align_mis_rots[1], size=(1,))
-
-                    results['caminfo'][i]['sensor2lidar_rotation'] += offset_rots
-
+                    offset_rots[2] = offset_yaw[0]
+                    rots_quaternions = results['caminfo'][i]['sensor2lidar_rotation']
+                    print("BF"+rots_quaternions)
+                    rots_degrees = euler_from_quaternion(rots_quaternions) += offset_rots
+                    results['caminfo'][i]['sensor2lidar_rotation'] = get_quaternion_from_euler(rots_degrees)
+                    print("AF"+results['caminfo'][i]['sensor2lidar_rotation'])
         return results
 
     def __repr__(self):

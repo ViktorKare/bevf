@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import torch
-
-__all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams"]
+import math
+__all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams", "euler_from_quaternion", "get_quaternion_from_euler"]
 
 # Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
 
@@ -106,3 +106,33 @@ def reduce_LiDAR_beams(pts, reduce_beams_to=32):
     points = pts[mask]
     # print(points.size())
     return points.numpy()
+
+def euler_from_quaternion(array):
+        x, y, z, w = array
+
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        roll_x = math.atan2(t0, t1)
+     
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch_y = math.asin(t2)
+     
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw_z = math.atan2(t3, t4)
+
+        return np.array([roll_x, pitch_y, yaw_z]) # in radians
+
+def get_quaternion_from_euler(array):
+    
+    roll, pitch, yaw = array
+
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    if qw < 0:
+        qx, qy, qz, qw =  -qx, -qy, -qz, -qw
+    return np.array([qx, qy, qz, qw])
