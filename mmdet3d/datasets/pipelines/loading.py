@@ -17,16 +17,16 @@ from .loading_utils import reduce_LiDAR_beams
 
 
 
-# BEAMS HERE!!!
+# BEAMS
 use_reduced_beams = False
-beams = 32
-# MISSALIGNMENT HERE!!!
-alig_miss = False
-translation_aug = np.array([0, 0, 0])
+beams = 1
 
-
-
-
+# MISALIGNMENT
+align_mis = False
+#Offset in meters, applies randomly to all cams x y z.
+align_mis_trans = [-0.05, 0.05]#m    #None   
+#Offset in degrees, applies randomly to all cams yaw.
+align_mis_rots = None #[-3, 3]#align_mis_rots
 
 
 
@@ -526,6 +526,24 @@ class LoadMultiViewImageFromFiles(object):
                 guassian_depth, min_depth, std_var = generate_guassian_depth_target(torch.from_numpy(depth).unsqueeze(0), stride=8, cam_depth_range=self.cam_depth_range, constant_std=self.constant_std)
                 depth = torch.cat([min_depth[0].unsqueeze(-1), guassian_depth[0]], dim=-1)
                 results['img_depth'].append(depth)
+
+        # If align mis is true, apply translation and/or rotation noise:
+        if align_mis:
+            #Get random seed from front camera name, mod() to required size:
+            seed_int = int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**32 - 1)
+            np.random.seed(seed_int)
+            for i, cam in enumerate(results['caminfo']):
+                #xyz = cam['sensor2lidar_translation']
+                #rots = cam['sensor2lidar_rotation']
+                if align_mis_trans is not None:
+                    offset_xyz = np.random.uniform(low=align_mis_trans[0], high=align_mis_trans[1], size=(3,))
+                    results['caminfo'][i]['sensor2lidar_translation'] += offset_xyz
+                if align_mis_rots is not None:
+                    offset_rots = np.zeros(4)
+                    offset_yaw = np.random.uniform(low=align_mis_rots[0], high=align_mis_rots[1], size=(1,))
+
+                    results['caminfo'][i]['sensor2lidar_rotation'] += offset_rots
+
         return results
 
     def __repr__(self):
@@ -724,16 +742,11 @@ class LoadPointsFromMultiSweeps(object):
                     'sensor2lidar_rotation'].T
                 
 
-                if alig_miss:
-                    sweep_translation = sweep['sensor2lidar_translation'] + translation_aug
-                else:
-                    sweep_translation = sweep['sensor2lidar_translation']
+                sweep_translation = sweep['sensor2lidar_translation']
                 
                     
                 points_sweep[:, :3] += sweep_translation
-                #print(sweep['sensor2lidar_translation'].shape)
-                #print(sweep['sensor2lidar_translation'])
-                #print(sweep_translation)
+                
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)

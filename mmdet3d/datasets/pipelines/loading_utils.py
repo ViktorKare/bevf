@@ -1,10 +1,10 @@
-#From BEVFusion: https://github.com/mit-han-lab/bevfusion
 import os
 import numpy as np
 import torch
 
 __all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams"]
 
+# Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
 
 def load_augmented_point_cloud(path, virtual=False, reduce_beams=32):
     # NOTE: following Tianwei's implementation, it is hard coded for nuScenes

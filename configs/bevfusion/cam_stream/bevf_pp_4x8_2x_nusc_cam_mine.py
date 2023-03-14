@@ -11,6 +11,7 @@ optimizer = dict(_delete_=True, type='AdamW', lr=0.001, betas=(0.9, 0.999), weig
 final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
+total_epochs = 12
 model = dict(
     type='BEVF_FasterRCNN',
     camera_stream=True, 
@@ -106,8 +107,10 @@ model = dict(
 
 
 data = dict(
-    samples_per_gpu=1,
-    workers_per_gpu=2,)
+    samples_per_gpu=2,
+    workers_per_gpu=6,)
 
-load_img_from = 'work_dirs/mask_rcnn_dbswin-t_fpn_3x_nuim_cocopre/epoch_36.pth'
+#load_img_from = 'work_dirs/mask_rcnn_dbswin-t_fpn_3x_nuim_cocopre/epoch_36.pth'
+load_img_from = 'work_dirs/mask_rcnn_r50_fpn_1x_nuim.pth'
+resume_from = 'work_dirs/bevf_pp_4x8_2x_nusc_cam_mine/latest.pth'
 # fp16 = dict(loss_scale=32.0)

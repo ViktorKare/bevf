@@ -10,8 +10,10 @@ from .cam_stream_lss import LiftSplatShoot
 from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
                       constant_init, is_norm, kaiming_init)
 from torchvision.utils import save_image
-from mmcv.cnn import ConvModule, xavier_init
+from mmcv.cnn import ConvModule, xavier_init, NonLocal2d
 import torch.nn as nn
+
+
 class SE_Block(nn.Module):
     def __init__(self, c):
         super().__init__()
@@ -24,40 +26,37 @@ class SE_Block(nn.Module):
         return x * self.att(x)
 
 class Fusion_Block(nn.Module):
-    def __init__(self, licimc, mid1, mid2, mid3, lic):
+    def __init__(self, lic, imc, mid1, mid2):
         super().__init__()
-        self.att1 = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(mid1, mid1, kernel_size=1, stride=1),
-            nn.Sigmoid()
-        )
-        self.att2 = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(mid2, mid2, kernel_size=1, stride=1),
-            nn.Sigmoid()
-        )
-        self.att3 = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(mid3, mid3, kernel_size=1, stride=1),
-            nn.Sigmoid()
-        )
-        self.reduc1 = ConvModule(licimc, mid1, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
-        self.reduc2 = ConvModule(mid1, mid2, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
-        self.reduc3 = ConvModule(mid2, mid3, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
-        self.reduc4 = ConvModule(mid3, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.nonloc = NonLocal2d(imc+imc,reduction=2,sub_sample=True,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01))
+        '''
+        #self.att1 = SE_Block(mid1)
+        #self.att2 = SE_Block(mid2)
+        self.att3 = SE_Block(lic)
+        self.reduc0 = ConvModule(lic, imc, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        #self.reduc1 = ConvModule(imc+imc, mid1, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        #self.reduc2 = ConvModule(mid1, mid2, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        #self.reduc3 = ConvModule(mid2, imc, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reductemp = ConvModule(imc+imc, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)'''
 
-    def forward(self, feats):
-        feats = self.reduc1(feats)
-        feats = feats * self.att1(feats)
-        feats = self.reduc2(feats)
-        feats = feats * self.att2(feats)
-        feats = self.reduc3(feats)
-        feats = feats * self.att3(feats)
-        feats = self.reduc4(feats)
+        self.reduc0 = ConvModule(lic, imc, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduceandatt = nn.Sequential(
+            ConvModule(imc+imc, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False),
+            SE_Block(lic),
+        )
+
+    def forward(self, img_bev_feat, pts_feats):
+
+        pts_feats = self.reduc0(pts_feats) #point feats to 256 C
+        feats = torch.cat([img_bev_feat, pts_feats], dim=1)
+        
+        feats = self.nonloc(feats)
+
+        feats = self.reduceandatt(feats)
         return feats
  
 @DETECTORS.register_module()
-class BEVF_FasterRCNN_mob(MVXFasterRCNN):
+class BEVF_FasterRCNN_mob_global(MVXFasterRCNN):
     """Multi-modality BEVFusion using Faster R-CNN."""
 
     def __init__(self, lss=False, lc_fusion=False, camera_stream=False,
@@ -75,7 +74,7 @@ class BEVF_FasterRCNN_mob(MVXFasterRCNN):
             lic (int): channel dimension of LiDAR BEV feature.
 
         """
-        super(BEVF_FasterRCNN_mob, self).__init__(**kwargs)
+        super(BEVF_FasterRCNN_mob_global, self).__init__(**kwargs)
         self.num_views = num_views
         self.lc_fusion = lc_fusion
         self.img_depth_loss_weight = img_depth_loss_weight
@@ -88,7 +87,7 @@ class BEVF_FasterRCNN_mob(MVXFasterRCNN):
             pc_range=pc_range, final_dim=final_dim, downsample=downsample)
         if lc_fusion:
             if se:
-                self.fusion_block = Fusion_Block(lic+imc,576,512,448,lic)
+                self.fusion_block = Fusion_Block(lic,imc,512,384)
                 #self.fusion_block = Fusion_Block(lic+imc,500,400,lic)
             else:
                 self.seblock = SE_Block(lic)
@@ -183,7 +182,7 @@ class BEVF_FasterRCNN_mob(MVXFasterRCNN):
                 if self.lc_fusion and self.se:
                     if img_bev_feat.shape[2:] != pts_feats[0].shape[2:]:
                         img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
-                    pts_feats = [self.fusion_block(torch.cat([img_bev_feat, pts_feats[0]], dim=1))]
+                    pts_feats = [self.fusion_block(img_bev_feat, pts_feats[0])]
 
 
         return dict(
