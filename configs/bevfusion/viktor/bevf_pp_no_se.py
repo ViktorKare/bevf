@@ -153,4 +153,4 @@ optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
 
 load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
 load_from = 'work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/epoch_24.pth'  #####load lidar stream
-#resume_from = 'work_dirs/bevf_pp_no_se/epoch_11.pth'
+resume_from = 'work_dirs/bevf_pp_no_se/latest.pth'

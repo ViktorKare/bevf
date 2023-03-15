@@ -144,7 +144,7 @@ model = dict(
 
 data = dict(
     samples_per_gpu=1,
-    workers_per_gpu=4,)
+    workers_per_gpu=3,)
 
 optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),

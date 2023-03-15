@@ -6,7 +6,21 @@ from mmdet3d.core.points import BasePoints
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import to_tensor
 
+from .loading_utils import rotation_matrix
+from mmdet3d.core.visualizer.image_vis import project_pts_on_img
+
 PIPELINES._module_dict.pop('DefaultFormatBundle')
+
+
+"""Misalignment
+Random noise to camera2lidar transfer matrix. Translation in xyz. 
+Rotation in 
+"""
+align_mis = False
+#Offset in meters, applies randomly to all cams x y z.
+align_mis_trans = [-0.05, 0.05]#m                 
+#Offset in degrees, applies randomly to all cams yaw.
+align_mis_rots = None #[-20, 20]#Degrees        
 
 
 @PIPELINES.register_module()
@@ -173,6 +187,43 @@ class Collect3D(object):
         for key in self.meta_keys:
             if key in results:
                 img_metas[key] = results[key]
+
+                # If align mis is true, apply translation and/or rotation noise:
+                if align_mis == True:
+                    #Get random seed from front camera name, mod() to required size:
+                    s =  results['filename'][1]
+                    seed_int = int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**18)
+                    np.random.seed(seed_int)
+                    if key == "lidar2img":
+                        #print("new")
+                        for transform in img_metas[key]:
+                            #print(transform)
+    
+                            if align_mis_trans is not None:
+                                trans = transform[:3, 3]
+                                #print(trans)
+                                offset_xyz = np.random.uniform(low=align_mis_trans[0], high=align_mis_trans[1], size=(3,))
+                                transform[:3, 3] += offset_xyz
+
+                            if align_mis_rots is not None:
+                                rot = transform[:3, :3]
+                                #print(rot)
+                                rots_offsets = np.random.uniform(low=align_mis_rots[0], high=align_mis_rots[1], size=(3,))
+                                #rots_bf = results['caminfo'][i]['sensor2lidar_rotation']
+                                #print("BF")
+                                #print(rots_bf)
+                                #rots_rads = euler_from_quaternion(rots_quaternions) + offset_rots
+                                #results['caminfo'][i]['sensor2lidar_rotation'] = get_quaternion_from_euler(rots_rad)
+                                
+                                matrix = rotation_matrix(0,0,rots_offsets[2]) #Inputs degrees
+                                #print("Rotation matrix")
+                                #print(matrix)
+                                transform[:3, :3] = matrix*rot
+
+                            #print("AF")
+                            #print(transform)
+                            #project_pts_on_img(results['points'].tensor.numpy(), results['img'][1], results['lidar2img'][1])
+
 
         data['img_metas'] = DC(img_metas, cpu_only=True)
         for key in self.keys:

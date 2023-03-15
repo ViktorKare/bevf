@@ -2,7 +2,7 @@ import os
 import numpy as np
 import torch
 import math
-__all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams", "euler_from_quaternion", "get_quaternion_from_euler"]
+__all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams", "rotation_matrix"]
 
 # Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
 
@@ -107,32 +107,22 @@ def reduce_LiDAR_beams(pts, reduce_beams_to=32):
     # print(points.size())
     return points.numpy()
 
-def euler_from_quaternion(array):
-        x, y, z, w = array
+def rotation_matrix(theta1, theta2, theta3):
+    """
+    input
+        theta1, theta2, theta3 = rotation angles in rotation order (degrees)
+    output
+        3x3 rotation matrix (numpy array)
+    """
+    c1 = np.cos(theta1 * np.pi / 180)
+    s1 = np.sin(theta1 * np.pi / 180)
+    c2 = np.cos(theta2 * np.pi / 180)
+    s2 = np.sin(theta2 * np.pi / 180)
+    c3 = np.cos(theta3 * np.pi / 180)
+    s3 = np.sin(theta3 * np.pi / 180)
 
-        t0 = +2.0 * (w * x + y * z)
-        t1 = +1.0 - 2.0 * (x * x + y * y)
-        roll_x = math.atan2(t0, t1)
-     
-        t2 = +2.0 * (w * y - z * x)
-        t2 = +1.0 if t2 > +1.0 else t2
-        t2 = -1.0 if t2 < -1.0 else t2
-        pitch_y = math.asin(t2)
-     
-        t3 = +2.0 * (w * z + x * y)
-        t4 = +1.0 - 2.0 * (y * y + z * z)
-        yaw_z = math.atan2(t3, t4)
+    matrix=np.array([[c2*c3, -c2*s3, s2],
+    [c1*s3+c3*s1*s2, c1*c3-s1*s2*s3, -c2*s1],
+    [s1*s3-c1*c3*s2, c3*s1+c1*s2*s3, c1*c2]],dtype=np.float64)
 
-        return np.array([roll_x, pitch_y, yaw_z]) # in radians
-
-def get_quaternion_from_euler(array):
-    
-    roll, pitch, yaw = array
-
-    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-    if qw < 0:
-        qx, qy, qz, qw =  -qx, -qy, -qz, -qw
-    return np.array([qx, qy, qz, qw])
+    return matrix
