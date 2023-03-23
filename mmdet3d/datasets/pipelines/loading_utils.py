@@ -123,6 +123,6 @@ def rotation_matrix(theta1, theta2, theta3):
 
     matrix=np.array([[c2*c3, -c2*s3, s2],
     [c1*s3+c3*s1*s2, c1*c3-s1*s2*s3, -c2*s1],
-    [s1*s3-c1*c3*s2, c3*s1+c1*s2*s3, c1*c2]],dtype=np.float64)
+    [s1*s3-c1*c3*s2, c3*s1+c1*s2*s3, c1*c2]])
 
     return matrix

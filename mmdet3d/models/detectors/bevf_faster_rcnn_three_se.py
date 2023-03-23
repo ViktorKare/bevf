@@ -12,6 +12,10 @@ from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
 from torchvision.utils import save_image
 from mmcv.cnn import ConvModule, xavier_init
 import torch.nn as nn
+
+import mmcv
+from mmdet3d.core.visualizer.image_vis import project_pts_on_img
+
 class SE_Block(nn.Module):
     def __init__(self, c):
         super().__init__()
@@ -161,6 +165,7 @@ class BEVF_FasterRCNN_three_se(MVXFasterRCNN):
             
             img_bev_feat, depth_dist = self.lift_splat_shot_vis(img_feats_view, rots, trans, lidar2img_rt=lidar2img_rt, img_metas=img_metas)
             # print(img_bev_feat.shape, pts_feats[-1].shape)
+            project_pts_on_img(points[0].cpu().detach().numpy(), mmcv.imread(img_metas[sample_idx]['filename'][1]), img_metas[sample_idx]['lidar2img'][1])
             if pts_feats is None:
                 pts_feats = [img_bev_feat] ####cam stream only
             else:

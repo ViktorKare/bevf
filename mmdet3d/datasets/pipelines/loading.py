@@ -515,6 +515,7 @@ class LoadMultiViewImageFromFiles(object):
                 guassian_depth, min_depth, std_var = generate_guassian_depth_target(torch.from_numpy(depth).unsqueeze(0), stride=8, cam_depth_range=self.cam_depth_range, constant_std=self.constant_std)
                 depth = torch.cat([min_depth[0].unsqueeze(-1), guassian_depth[0]], dim=-1)
                 results['img_depth'].append(depth)
+        #project_pts_on_img(results['points'].tensor.numpy(), results['img'][0], results['lidar2img'][0])
         return results
 
     def __repr__(self):

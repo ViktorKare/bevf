@@ -26,7 +26,7 @@ train_pipeline = [
     ),
     dict(
         type='LoadPointsFromMultiSweeps',
-        sweeps_num=1,
+        sweeps_num=0,
     ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='LoadMultiViewImageFromFiles', project_pts_to_img_depth=True),
@@ -50,7 +50,7 @@ test_pipeline = [
     ),
     dict(
         type='LoadPointsFromMultiSweeps',
-        sweeps_num=1,
+        sweeps_num=0,
     ),
     dict(type='LoadMultiViewImageFromFiles'),
     dict(

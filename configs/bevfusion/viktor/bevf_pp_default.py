@@ -3,16 +3,15 @@ _base_ = [
     '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
-evaluation = dict(interval=6)
 final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
-total_epochs = 6
+total_epochs = 2
 model = dict(
-    type='BEVF_FasterRCNN_encode_decode',
+    type='BEVF_FasterRCNN',
     freeze_img=True,
-    se=True, #False for default
+    se=True,
     lc_fusion=True,
     camera_stream=True, 
     grid=0.5, 
@@ -78,8 +77,8 @@ model = dict(
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=10,
-        in_channels=512,
-        feat_channels=512,
+        in_channels=384,
+        feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
@@ -152,20 +151,7 @@ optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
 
-'''
-optimizer = dict(
-    type='AdamW',
-    lr=0.0001,
-    betas=(0.9, 0.999),
-    weight_decay=0.05,
-    paramwise_cfg=dict(
-        custom_keys=dict(
-            absolute_pos_embed=dict(decay_mult=0.0),
-            relative_position_bias_table=dict(decay_mult=0.0),
-            norm=dict(decay_mult=0.0))))
-optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
-'''
-
 load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
 load_from = 'work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/epoch_24.pth'  #####load lidar stream
-resume_from = 'work_dirs/bevf_pp_encode_decode/latest.pth'
+#resume_from = 'work_dirs/bevf_pp_default/epoch_4.pth'
+#load_from = 'work_dirs/bevf_pp_default/epoch_.pth'

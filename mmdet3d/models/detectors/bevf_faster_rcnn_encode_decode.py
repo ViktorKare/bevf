@@ -13,28 +13,30 @@ from torchvision.utils import save_image
 from mmcv.cnn import ConvModule, xavier_init
 import torch.nn as nn
 
-from mmdet.models.backbone import SECOND
-from mmdet.models.necks import SECONDFPN
+from mmdet.models import BACKBONES
+from mmdet3d.models.backbones import SECOND
+from mmdet3d.models.necks import SECONDFPN
+
+from mmdet3d.models.builder import build_backbone, build_neck
 
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
         super().__init__()
-        seld.reduce_encode_decode = nn.Sequential(
-            self.reduc = ConvModule(lic+imc, lic, 3, padding=1,conv_cfg=dict(type="Conv2d", bias=False),norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),act_cfg=dict(type='ReLU'),inplace=False),
-            self.encode = SECOND(in_channels=lic,out_channels=[128, 256], layer_nums=[5, 5], layer_strides=[1, 2]),
-            self.decode = SECONDFPN(in_channels=[128, 256], out_channels=[256, 256], upsample_strides=[1, 2])
-        )
+        self.reduce = ConvModule(lic+imc, imc, 3, padding=1, bias=False, conv_cfg=None, norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),act_cfg=dict(type='ReLU'),inplace=False)
+        self.encoder = build_backbone(dict(type='SECOND', in_channels=imc,out_channels=[128, 256], layer_nums=[5, 5], layer_strides=[1, 2]))
+        self.decoder = build_neck(dict(type='SECONDFPN', in_channels=[128, 256], out_channels=[256, 256], upsample_strides=[1, 2]))
+        
         
     def forward(self, img_bev_feat, pts_feats):
 
-        
         feats = torch.cat([img_bev_feat, pts_feats], dim=1)
-        feats = self.reduce_encode_decode(feats)
-
-        return feats
+        feats = self.reduce(feats)
+        feats = self.encoder(feats)
+        feats = self.decoder(feats)
+        return feats[0]
  
 @DETECTORS.register_module()
-class BEVF_FasterRCNN_non_local(MVXFasterRCNN):
+class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
     """Multi-modality BEVFusion using Faster R-CNN."""
 
     def __init__(self, lss=False, lc_fusion=False, camera_stream=False,
@@ -52,7 +54,7 @@ class BEVF_FasterRCNN_non_local(MVXFasterRCNN):
             lic (int): channel dimension of LiDAR BEV feature.
 
         """
-        super(BEVF_FasterRCNN_non_local, self).__init__(**kwargs)
+        super(BEVF_FasterRCNN_encode_decode, self).__init__(**kwargs)
         self.num_views = num_views
         self.lc_fusion = lc_fusion
         self.img_depth_loss_weight = img_depth_loss_weight

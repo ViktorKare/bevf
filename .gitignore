@@ -116,6 +116,7 @@ data
 work_dirs/
 exps/
 *~
+viz/
 
 # Pytorch
 *.pth
