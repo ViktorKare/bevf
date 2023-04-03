@@ -13,24 +13,31 @@ from torchvision.utils import save_image
 from mmcv.cnn import ConvModule, xavier_init
 import torch.nn as nn
 
+from mmdet.models import BACKBONES
+from mmdet3d.models.backbones import SECOND
+from mmdet3d.models.necks import SECONDFPN
+
+from mmdet3d.models.builder import build_backbone, build_neck
 
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
         super().__init__()
-        self.lin =  nn.Sequential(
-                        nn.Conv2d(lic+imc, lic, kernel_size=1, bias=True), 
-                        nn.BatchNorm2d(lic, eps=1e-3, momentum=0.01),
-                        nn.ReLU(True)
-                        )
-
-    def forward(self, img_bev_feat, pts_feats):
-        #lic = 384, imc = 256
+        self.reduce = ConvModule(lic+imc, lic, 3, padding=1, bias=False, conv_cfg=None, norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),act_cfg=dict(type='ReLU'),inplace=False)
+        self.encoder = build_backbone(dict(type='SECOND', in_channels=lic, out_channels=[384, 256, 64], layer_nums=[1, 1, 5], layer_strides=[1, 2, 2]))
+        self.decoder = build_neck(dict(type='SECONDFPN', in_channels=[384, 256, 64], out_channels=[384, 256, 128], upsample_strides=[1, 2, 4]))
         
-        feats = self.lin(torch.cat([img_bev_feat, pts_feats], dim=1))
-        return feats
+    def forward(self, img_bev_feat, pts_feats):
+
+        feats = torch.cat([img_bev_feat, pts_feats], dim=1)
+        feats = self.reduce(feats)
+        feats = self.encoder(feats)
+        #for tup in feats:
+        #    print(tup.shape)
+        feats = self.decoder(feats)
+        return feats[0]
  
 @DETECTORS.register_module()
-class BEVF_FasterRCNN_linear(MVXFasterRCNN):
+class BEVF_FasterRCNN_encodedecode(MVXFasterRCNN):
     """Multi-modality BEVFusion using Faster R-CNN."""
 
     def __init__(self, lss=False, lc_fusion=False, camera_stream=False,
@@ -48,7 +55,7 @@ class BEVF_FasterRCNN_linear(MVXFasterRCNN):
             lic (int): channel dimension of LiDAR BEV feature.
 
         """
-        super(BEVF_FasterRCNN_linear, self).__init__(**kwargs)
+        super(BEVF_FasterRCNN_encodedecode, self).__init__(**kwargs)
         self.num_views = num_views
         self.lc_fusion = lc_fusion
         self.img_depth_loss_weight = img_depth_loss_weight
@@ -61,7 +68,7 @@ class BEVF_FasterRCNN_linear(MVXFasterRCNN):
             pc_range=pc_range, final_dim=final_dim, downsample=downsample)
         if lc_fusion:
             self.fusion_block = Fusion_Block(lic,imc)
-            
+        
             
         self.freeze_img = kwargs.get('freeze_img', False)
         self.init_weights(pretrained=kwargs.get('pretrained', None))

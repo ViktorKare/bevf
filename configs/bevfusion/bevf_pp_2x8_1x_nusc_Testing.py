@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/nusc_pp.py',
+    '../_base_/datasets/nusc_pp_one_sweep.py',
     '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
 ]
@@ -8,9 +8,9 @@ downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
 model = dict(
-    type='BEVF_FasterRCNN_mob',
+    type='BEVF_FasterRCNN',
     freeze_img=True,
-    se=True, #False for default
+    se=True,
     lc_fusion=True,
     camera_stream=True, 
     grid=0.5, 

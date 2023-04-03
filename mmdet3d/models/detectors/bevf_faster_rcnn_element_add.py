@@ -17,12 +17,12 @@ import torch.nn as nn
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
         super().__init__()
-        self.reduc0 = ConvModule(lic, imc, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduc0 = ConvModule(imc, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
        
 
     def forward(self, img_bev_feat, pts_feats):
 
-        pts_feats = self.reduc0(pts_feats) #point feats to 256 C
+        img_bev_feat = self.reduc0(img_bev_feat) #img feats to 384 C
         feats = img_bev_feat + pts_feats
 
         return feats

@@ -10,14 +10,22 @@ from mmdet.datasets.pipelines import LoadAnnotations
 import os
 
 #From BEVFusion: https://github.com/mit-han-lab/bevfusion
-from .loading_utils import reduce_LiDAR_beams
+from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions
 
 
 """Layer reduction (beams)
 Default 32 on NuScenes
 """
 use_reduced_beams = False
-beams = 1
+beams = 4
+
+sim_close_lidar_occlusions = True
+occlusion_deg = 40
+
+if sim_close_lidar_occlusions:
+    from nuscenes.nuscenes import NuScenes
+    dataroot_nusc = '/data/sets/nuscenes'
+    nusc = NuScenes(version='v1.0-trainval', dataroot=dataroot_nusc, verbose=False)
 
 @PIPELINES.register_module()
 class MyResize(object):
@@ -581,6 +589,7 @@ class LoadPointsFromMultiSweeps(object):
         Returns:
             np.ndarray: An array containing point clouds data.
         """
+        #print(pts_filename)
         if self.file_client is None:
             self.file_client = mmcv.FileClient(**self.file_client_args)
         try:
@@ -702,6 +711,9 @@ class LoadPointsFromMultiSweeps(object):
                 
                 if use_reduced_beams and beams < 32:
                     points_sweep = reduce_LiDAR_beams(points_sweep, beams)
+                if sim_close_lidar_occlusions:
+                    scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
+                    points_sweep = simulate_close_lidar_occlusions(points_sweep, scene_token, occlusion_deg)
 
                 #if self.reduce_beams and self.reduce_beams < 32:
                 #    points_sweep = reduce_LiDAR_beams(points_sweep, self.reduce_beams)
@@ -722,7 +734,6 @@ class LoadPointsFromMultiSweeps(object):
                 points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points.new_point(points_sweep)
                 sweep_points_list.append(points_sweep)
-
         points = points.cat(sweep_points_list)
         if self.filter_by_angle:
             points = self.filter_point_by_angle(points)
@@ -1046,6 +1057,9 @@ class LoadPointsFromFile(object):
         points = points.reshape(-1, self.load_dim)
         if use_reduced_beams and beams < 32:
             points = reduce_LiDAR_beams(points, beams)
+        if sim_close_lidar_occlusions:
+            scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
+            points = simulate_close_lidar_occlusions(points, scene_token, occlusion_deg)
         points = points[:, self.use_dim]
         attribute_dims = None
 

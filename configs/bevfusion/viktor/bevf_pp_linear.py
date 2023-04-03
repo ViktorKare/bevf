@@ -3,6 +3,7 @@ _base_ = [
     '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
+evaluation = dict(interval=6)
 final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]

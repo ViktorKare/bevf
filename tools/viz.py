@@ -210,12 +210,12 @@ def main():
         bboxes = LiDARInstance3DBoxes(bboxes, box_dim=9)
         
         lidar = data["points"][0].data[0][0].numpy()
-        for point in lidar:
-            if point[2] <= -1.5:
-                point[0] = 0
-                point[1] = 0
-                point[2] = 0
-                point[3] = 0
+        # for point in lidar:
+        #     if point[2] <= -1.5:
+        #         point[0] = 0
+        #         point[1] = 0
+        #         point[2] = 0
+        #         point[3] = 0
 
 
         visualize_lidar(
