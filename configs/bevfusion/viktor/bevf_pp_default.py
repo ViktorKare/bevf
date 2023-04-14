@@ -1,13 +1,14 @@
 _base_ = [
     '../../_base_/datasets/nusc_pp.py',
-    '../../_base_/schedules/schedule_1x.py',
+    '../../_base_/schedules/schedule_opt.py',
     '../../_base_/default_runtime.py'
 ]
+evaluation = dict(interval=6)
 final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
-total_epochs = 2
+total_epochs = 6
 model = dict(
     type='BEVF_FasterRCNN',
     freeze_img=True,
@@ -153,5 +154,5 @@ optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
 
 load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
 load_from = 'work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/epoch_24.pth'  #####load lidar stream
-#resume_from = 'work_dirs/bevf_pp_default/epoch_4.pth'
-#load_from = 'work_dirs/bevf_pp_default/epoch_.pth'
+resume_from = 'work_dirs/bevf_pp_default/epoch_5.pth'
+

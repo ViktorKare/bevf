@@ -6,7 +6,7 @@ from mmdet3d.core.points import BasePoints
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import to_tensor
 
-from .loading_utils import rotation_matrix
+from .loading_utils import rotation_matrix, get_seed_from_front_cam_name
 from mmdet3d.core.visualizer.image_vis import project_pts_on_img
 
 PIPELINES._module_dict.pop('DefaultFormatBundle')
@@ -18,7 +18,7 @@ Rotation in yaw [degrees].
 """
 align_mis = False
 #Offset in meters, applies randomly to all cams x y z.
-align_mis_trans = None #[-1, 1]#m                 
+align_mis_trans =  [-1, 1]#m                 
 #Offset in degrees. 
 align_mis_rots = [-1, 1]#Degrees        
 
@@ -191,9 +191,7 @@ class Collect3D(object):
                 # If align mis is true, apply translation and/or rotation noise:
                 if align_mis == True:
                     #Get random seed from front camera name, mod() to required size:
-                    s =  results['filename'][1]
-                    seed_int = int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**18)
-                    np.random.seed(seed_int)
+                    np.random.seed(get_seed_from_front_cam_name(results['filename'][1]))
                     if key == "lidar2img":
                         for transform in img_metas[key]:
     

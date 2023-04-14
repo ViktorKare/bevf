@@ -10,7 +10,7 @@ from mmdet.datasets.pipelines import LoadAnnotations
 import os
 
 #From BEVFusion: https://github.com/mit-han-lab/bevfusion
-from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions
+from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions, simulate_missing_lidar_points, get_seed_from_front_cam_name
 
 
 """Layer reduction (beams)
@@ -19,13 +19,19 @@ Default 32 on NuScenes
 use_reduced_beams = False
 beams = 4
 
-sim_close_lidar_occlusions = True
-occlusion_deg = 40
+sim_close_lidar_occlusions = False
+occlusion_deg = 20
+
+sim_missing_lidar_points = False
+percentage_of_lidar_points_to_remove = 20
+
+
+
 
 if sim_close_lidar_occlusions:
     from nuscenes.nuscenes import NuScenes
     dataroot_nusc = '/data/sets/nuscenes'
-    nusc = NuScenes(version='v1.0-trainval', dataroot=dataroot_nusc, verbose=False)
+    nusc = NuScenes(version='v1.0-trainval', dataroot=dataroot_nusc, verbose=True)
 
 @PIPELINES.register_module()
 class MyResize(object):
@@ -708,9 +714,12 @@ class LoadPointsFromMultiSweeps(object):
                 points_sweep = self._load_points(sweep['data_path'])
                 points_sweep = np.copy(points_sweep).reshape(-1, self.load_dim)
 
-                
                 if use_reduced_beams and beams < 32:
                     points_sweep = reduce_LiDAR_beams(points_sweep, beams)
+
+                if sim_missing_lidar_points:
+                    points_sweep = simulate_missing_lidar_points(points_sweep, percentage_of_lidar_points_to_remove, get_seed_from_front_cam_name(results['img_filename'][1]))
+
                 if sim_close_lidar_occlusions:
                     scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
                     points_sweep = simulate_close_lidar_occlusions(points_sweep, scene_token, occlusion_deg)
@@ -1013,7 +1022,7 @@ class LoadPointsFromFile(object):
 
         self.coord_type = coord_type
         self.load_dim = load_dim
-        self.use_dim = use_dim
+        self.use_dim = use_dim=use_dim
         self.file_client_args = file_client_args.copy()
         self.file_client = None
 
@@ -1054,9 +1063,12 @@ class LoadPointsFromFile(object):
         """
         pts_filename = results['pts_filename']
         points = self._load_points(pts_filename)
+        
         points = points.reshape(-1, self.load_dim)
         if use_reduced_beams and beams < 32:
             points = reduce_LiDAR_beams(points, beams)
+        if sim_missing_lidar_points:
+            points = simulate_missing_lidar_points(points, percentage_of_lidar_points_to_remove, get_seed_from_front_cam_name(results['img_filename'][1]))
         if sim_close_lidar_occlusions:
             scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
             points = simulate_close_lidar_occlusions(points, scene_token, occlusion_deg)

@@ -217,7 +217,6 @@ def main():
         #         point[2] = 0
         #         point[3] = 0
 
-
         visualize_lidar(
             os.path.join('./viz', "lidar", f"{i}.png"),
             lidar,

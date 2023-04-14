@@ -59,7 +59,38 @@ class Fusion_Block(nn.Module):
         feats = feats * self.att3(feats)
         feats = self.reduc4(feats)
         return feats
- 
+    
+'''class Fusion_Block(nn.Module):
+    def __init__(self, licimc, mid1, mid2, lic):
+        super().__init__()
+        self.att1 = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(mid1, mid1, kernel_size=1, stride=1),
+            nn.Sigmoid()
+        )
+        self.att2 = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(mid2, mid2, kernel_size=1, stride=1),
+            nn.Sigmoid()
+        )
+        self.att3 = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(lic, lic, kernel_size=1, stride=1),
+            nn.Sigmoid()
+        )
+        self.reduc1 = ConvModule(licimc, mid1, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduc2 = ConvModule(mid1, mid2, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        self.reduc3 = ConvModule(mid2, lic, 3, padding=1,conv_cfg=None,norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01), act_cfg=dict(type='ReLU'),inplace=False)
+        
+    def forward(self, feats):
+        feats = self.reduc1(feats)
+        feats = feats * self.att1(feats)
+        feats = self.reduc2(feats)
+        feats = feats * self.att2(feats)
+        feats = self.reduc3(feats)
+        feats = feats * self.att3(feats)
+        return feats'''
+
 @DETECTORS.register_module()
 class BEVF_FasterRCNN_three_se(MVXFasterRCNN):
     """Multi-modality BEVFusion using Faster R-CNN."""
@@ -93,7 +124,7 @@ class BEVF_FasterRCNN_three_se(MVXFasterRCNN):
         if lc_fusion:
             if se:
                 self.fusion_block = Fusion_Block(lic+imc,576,512,448,lic)
-                #self.fusion_block = Fusion_Block(lic+imc,500,400,lic)
+                #self.fusion_block = Fusion_Block(lic+imc,576,448,lic)
             else:
                 self.seblock = SE_Block(lic)
                 self.reduc_conv = ConvModule(
@@ -164,8 +195,10 @@ class BEVF_FasterRCNN_three_se(MVXFasterRCNN):
             lidar2img_rt = img_metas[sample_idx]['lidar2img']  #### extrinsic parameters for multi-view images
             
             img_bev_feat, depth_dist = self.lift_splat_shot_vis(img_feats_view, rots, trans, lidar2img_rt=lidar2img_rt, img_metas=img_metas)
+            
             # print(img_bev_feat.shape, pts_feats[-1].shape)
-            project_pts_on_img(points[0].cpu().detach().numpy(), mmcv.imread(img_metas[sample_idx]['filename'][1]), img_metas[sample_idx]['lidar2img'][1])
+            #project_pts_on_img(points[0].cpu().detach().numpy(), mmcv.imread(img_metas[sample_idx]['filename'][1]), img_metas[sample_idx]['lidar2img'][1])
+            
             if pts_feats is None:
                 pts_feats = [img_bev_feat] ####cam stream only
             else:

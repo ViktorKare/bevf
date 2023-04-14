@@ -19,13 +19,24 @@ from mmdet3d.models.necks import SECONDFPN
 
 from mmdet3d.models.builder import build_backbone, build_neck
 
+class SE_Block(nn.Module):
+    def __init__(self, c):
+        super().__init__()
+        self.att = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(c, c, kernel_size=1, stride=1),
+            nn.Sigmoid()
+        )
+    def forward(self, x):
+        return x * self.att(x)
+
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
         super().__init__()
         self.reduce = ConvModule(lic+imc, lic, 3, padding=1, bias=False, conv_cfg=None, norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),act_cfg=dict(type='ReLU'),inplace=False)
         self.encoder = build_backbone(dict(type='SECOND', in_channels=lic, out_channels=[384, 256, 64], layer_nums=[1, 1, 5], layer_strides=[1, 2, 2]))
         self.decoder = build_neck(dict(type='SECONDFPN', in_channels=[384, 256, 64], out_channels=[384, 256, 128], upsample_strides=[1, 2, 4]))
-        
+        self.seblock = SE_Block(768)
     def forward(self, img_bev_feat, pts_feats):
 
         feats = torch.cat([img_bev_feat, pts_feats], dim=1)
@@ -34,7 +45,9 @@ class Fusion_Block(nn.Module):
         #for tup in feats:
         #    print(tup.shape)
         feats = self.decoder(feats)
-        return feats[0]
+        feats = feats[0]
+        feats = self.seblock(feats)
+        return feats
  
 @DETECTORS.register_module()
 class BEVF_FasterRCNN_encodedecode(MVXFasterRCNN):

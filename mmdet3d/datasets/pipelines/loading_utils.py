@@ -4,7 +4,7 @@ import torch
 import math
 __all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams", "rotation_matrix"]
 
-# Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
+# LiDAR reduction of beams: Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
 
 def load_augmented_point_cloud(path, virtual=False, reduce_beams=32):
     # NOTE: following Tianwei's implementation, it is hard coded for nuScenes
@@ -52,8 +52,6 @@ def load_augmented_point_cloud(path, virtual=False, reduce_beams=32):
         )
         points = np.concatenate([points, virtual_points2], axis=0).astype(np.float32)
     return points
-
-
 def reduce_LiDAR_beams(pts, reduce_beams_to=32):
     # print(pts.size())
     if isinstance(pts, np.ndarray):
@@ -108,17 +106,27 @@ def reduce_LiDAR_beams(pts, reduce_beams_to=32):
     return points.numpy()
 
 def simulate_close_lidar_occlusions(pts, scene_token='x' ,occlusion_deg=10):
-    occlusion_deg = occlusion_deg/2 #left and right of forward x-axis (abs), so 5+5=10
+    occlusion_deg = occlusion_deg/2 #fix left and right of occlusion angle. Caused by abs.
     if isinstance(pts, np.ndarray):
         pts = torch.from_numpy(pts)
     occlusion_dir = int.from_bytes(scene_token.encode(), 'little')
     occlusion_dir = (int(str(occlusion_dir)[-6:]) % 360) - 180
     theta = torch.atan2(pts[:, 0], pts[:, 1])
-    theta = ((occlusion_dir * np.pi / 180)-theta)
+    theta = ((occlusion_dir * np.pi / 180) - theta)
     theta = np.absolute(theta%(2*math.pi) - math.pi)
-    mask = theta <= np.absolute(occlusion_deg * np.pi / 180)
+    mask = theta >= np.absolute(occlusion_deg * np.pi / 180)
     points=pts[mask]
 
+    return points.numpy()
+
+def simulate_missing_lidar_points(pts, percentage_of_lidar_points_to_remove, seed):
+    torch.manual_seed(seed)
+    if isinstance(pts, np.ndarray):
+        pts = torch.from_numpy(pts)
+    size = pts.size(0)
+    nr_of_samps = round(size*((100-percentage_of_lidar_points_to_remove)/100))
+    ind = permutations[:nr_of_samps]
+    points = pts[ind]
     return points.numpy()
 
 def rotation_matrix(theta1, theta2, theta3):
@@ -140,3 +148,8 @@ def rotation_matrix(theta1, theta2, theta3):
     [s1*s3-c1*c3*s2, c3*s1+c1*s2*s3, c1*c2]])
 
     return matrix
+
+
+
+def get_seed_from_front_cam_name(s):
+    return int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**18)
