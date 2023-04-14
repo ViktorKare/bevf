@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 import math
+import random
 __all__ = ["load_augmented_point_cloud", "reduce_LiDAR_beams", "rotation_matrix"]
 
 # LiDAR reduction of beams: Credit BEVFusion: https://github.com/mit-han-lab/bevfusion
@@ -109,8 +110,7 @@ def simulate_close_lidar_occlusions(pts, scene_token='x' ,occlusion_deg=10):
     occlusion_deg = occlusion_deg/2 #fix left and right of occlusion angle. Caused by abs.
     if isinstance(pts, np.ndarray):
         pts = torch.from_numpy(pts)
-    occlusion_dir = int.from_bytes(scene_token.encode(), 'little')
-    occlusion_dir = (int(str(occlusion_dir)[-6:]) % 360) - 180
+    occlusion_dir = (get_seed_from_token(scene_token) % 360) - 180
     theta = torch.atan2(pts[:, 0], pts[:, 1])
     theta = ((occlusion_dir * np.pi / 180) - theta)
     theta = np.absolute(theta%(2*math.pi) - math.pi)
@@ -119,12 +119,13 @@ def simulate_close_lidar_occlusions(pts, scene_token='x' ,occlusion_deg=10):
 
     return points.numpy()
 
-def simulate_missing_lidar_points(pts, percentage_of_lidar_points_to_remove, seed):
+def simulate_missing_lidar_points(pts, percentage_of_lidar_points_to_remove, seed='x'):
     torch.manual_seed(seed)
     if isinstance(pts, np.ndarray):
         pts = torch.from_numpy(pts)
     size = pts.size(0)
     nr_of_samps = round(size*((100-percentage_of_lidar_points_to_remove)/100))
+    permutations = torch.randperm(size)
     ind = permutations[:nr_of_samps]
     points = pts[ind]
     return points.numpy()
@@ -153,3 +154,5 @@ def rotation_matrix(theta1, theta2, theta3):
 
 def get_seed_from_front_cam_name(s):
     return int(s.split("__CAM_FRONT__")[1].split(".jpg")[0])%(2**18)
+def get_seed_from_token(s):
+    return int(str(int.from_bytes(s.encode(), 'little'))[-6:])

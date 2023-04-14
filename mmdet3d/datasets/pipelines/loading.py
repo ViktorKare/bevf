@@ -1,16 +1,17 @@
 import mmcv
 import numpy as np
 import torch
+import os
 
 from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet3d.core.visualizer.image_vis import project_pts_on_img, map_pointcloud_to_image
 from mmdet3d.core.utils.gaussian import generate_guassian_depth_target
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations
-import os
+
 
 #From BEVFusion: https://github.com/mit-han-lab/bevfusion
-from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions, simulate_missing_lidar_points, get_seed_from_front_cam_name
+from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions, simulate_missing_lidar_points, get_seed_from_front_cam_name, get_seed_from_token
 
 
 """Layer reduction (beams)
@@ -23,7 +24,7 @@ sim_close_lidar_occlusions = False
 occlusion_deg = 20
 
 sim_missing_lidar_points = False
-percentage_of_lidar_points_to_remove = 20
+percentage_of_lidar_points_to_remove = 10
 
 
 
@@ -718,7 +719,7 @@ class LoadPointsFromMultiSweeps(object):
                     points_sweep = reduce_LiDAR_beams(points_sweep, beams)
 
                 if sim_missing_lidar_points:
-                    points_sweep = simulate_missing_lidar_points(points_sweep, percentage_of_lidar_points_to_remove, get_seed_from_front_cam_name(results['img_filename'][1]))
+                    points_sweep = simulate_missing_lidar_points(points_sweep, percentage_of_lidar_points_to_remove, seed=get_seed_from_token(results['sample_idx']))
 
                 if sim_close_lidar_occlusions:
                     scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
@@ -1068,7 +1069,7 @@ class LoadPointsFromFile(object):
         if use_reduced_beams and beams < 32:
             points = reduce_LiDAR_beams(points, beams)
         if sim_missing_lidar_points:
-            points = simulate_missing_lidar_points(points, percentage_of_lidar_points_to_remove, get_seed_from_front_cam_name(results['img_filename'][1]))
+            points = simulate_missing_lidar_points(points, percentage_of_lidar_points_to_remove, seed=get_seed_from_token(results['sample_idx']))
         if sim_close_lidar_occlusions:
             scene_token = nusc.get('sample', results['sample_idx'])['scene_token']
             points = simulate_close_lidar_occlusions(points, scene_token, occlusion_deg)
