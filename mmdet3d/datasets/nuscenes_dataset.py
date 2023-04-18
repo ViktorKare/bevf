@@ -160,19 +160,19 @@ class NuScenesDataset(Custom3DDataset):
         self.drop_type = drop_set[1] # 丢帧情况：连续(consecutive) or 离散(discrete)
         self.noise_sensor_type = noise_sensor_type # lidar or camera 丢帧
 
-        if self.extrinsics_noise or self.drop_frames:
-            pkl_file = open('./data/nuscenes/nuscenes_infos_val_with_noise.pkl', 'rb')
-            noise_data = pickle.load(pkl_file)
-            self.noise_data = noise_data[noise_sensor_type]
-        else:
-            self.noise_data = None
+        #if self.extrinsics_noise or self.drop_frames:
+        #    pkl_file = open('./data/nuscenes/nuscenes_infos_val_with_noise.pkl', 'rb')
+        #    noise_data = pickle.load(pkl_file)
+        #    self.noise_data = noise_data[noise_sensor_type]
+        #else:
+        self.noise_data = None
         
-        print('noise setting:')
-        if self.drop_frames:
-            print('frame drop setting: drop ratio:', self.drop_ratio, ', sensor type:', self.noise_sensor_type, ', drop type:', self.drop_type)
-        if self.extrinsics_noise:
-            assert noise_sensor_type=='camera'
-            print(f'add {extrinsics_noise_type} noise to extrinsics')
+        #print('noise setting:')
+        #if self.drop_frames:
+        #    print('frame drop setting: drop ratio:', self.drop_ratio, ', sensor type:', self.noise_sensor_type, ', drop type:', self.drop_type)
+        #if self.extrinsics_noise:
+        #    assert noise_sensor_type=='camera'
+        #    print(f'add {extrinsics_noise_type} noise to extrinsics')
     
     ### for frop foreground points
     def __getitem__(self, idx):

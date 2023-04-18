@@ -18,9 +18,9 @@ Rotation in yaw [degrees].
 """
 align_mis = False
 #Offset in meters, applies randomly to all cams x y z.
-align_mis_trans =  [-1, 1]#m                 
+align_mis_trans =  None #[-1, 1]#m                 
 #Offset in degrees. 
-align_mis_rots = [-1, 1]#Degrees        
+align_mis_rots = None #[-3, 3]#Degrees        
 
 
 @PIPELINES.register_module()

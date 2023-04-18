@@ -3,14 +3,13 @@ _base_ = [
     '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
-evaluation = dict(interval=6)
 final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
 total_epochs = 6
 model = dict(
-    type='BEVF_FasterRCNN_element_add',
+    type='BEVF_FasterRCNN_non_local',
     freeze_img=True,
     se=True, #False for default
     lc_fusion=True,
@@ -144,14 +143,14 @@ model = dict(
 
 
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=6,)
+    samples_per_gpu=1,
+    workers_per_gpu=3,)
 
 optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
 
+#load_lift_from = 'work_dirs/bevf_pp_4x8_2x_nusc_cam_mine/latest.pth'     #####load cam stream
 load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
 load_from = 'work_dirs/hv_pointpillars_secfpn_sbn-all_4x8_2x_nus-3d/epoch_24.pth'  #####load lidar stream
-resume_from = 'work_dirs/bevf_pp_element_add/latest.pth'

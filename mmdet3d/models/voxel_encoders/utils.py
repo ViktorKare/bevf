@@ -56,7 +56,7 @@ class VFELayer(nn.Module):
         self.cat_max = cat_max
         self.max_out = max_out
         # self.units = int(out_channels / 2)
-        print('create hard')
+        #print('create hard')
 
         self.norm = build_norm_layer(norm_cfg, out_channels)[1]
         self.linear = nn.Linear(in_channels, out_channels, bias=False)
