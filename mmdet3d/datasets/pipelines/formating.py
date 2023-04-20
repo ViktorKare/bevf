@@ -16,11 +16,11 @@ PIPELINES._module_dict.pop('DefaultFormatBundle')
 Random noise to camera2lidar transfer matrix. Translation in xyz [m].
 Rotation in yaw [degrees].
 """
-align_mis = False
+align_mis = False #True
 #Offset in meters, applies randomly to all cams x y z.
-align_mis_trans =  None #[-1, 1]#m                 
+align_mis_trans =  None #[-0.1, 0.1]#m                 
 #Offset in degrees. 
-align_mis_rots = None #[-3, 3]#Degrees        
+align_mis_rots = None #[-1, 1]#Degrees        
 
 
 @PIPELINES.register_module()
@@ -187,30 +187,20 @@ class Collect3D(object):
         for key in self.meta_keys:
             if key in results:
                 img_metas[key] = results[key]
-
                 # If align mis is true, apply translation and/or rotation noise:
                 if align_mis == True:
-                    #Get random seed from front camera name, mod() to required size:
                     np.random.seed(get_seed_from_front_cam_name(results['filename'][1]))
                     if key == "lidar2img":
                         for transform in img_metas[key]:
-    
                             if align_mis_trans is not None:
                                 trans = transform[:3, 3]
                                 offset_xyz = np.random.uniform(low=align_mis_trans[0], high=align_mis_trans[1], size=(3,))
                                 transform[:3, 3] += offset_xyz
-
                             if align_mis_rots is not None:
                                 rot = transform[:3, :3]
                                 rots_offsets = np.random.uniform(low=align_mis_rots[0], high=align_mis_rots[1], size=(3,))
                                 matrix = rotation_matrix(rots_offsets[0],rots_offsets[1],rots_offsets[2]) #Inputs degrees
-                                #print("matrix")
-                                #print(matrix)
-                                #print("bf")
-                                #print(transform[:3, :3])
                                 transform[:3, :3] = np.matmul(transform[:3, :3],matrix)
-                                #print("af")
-                                #print(transform[:3, :3])
 
         data['img_metas'] = DC(img_metas, cpu_only=True)
         for key in self.keys:
