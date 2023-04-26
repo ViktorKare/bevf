@@ -222,8 +222,8 @@ def main():
             lidar,
             bboxes=bboxes,
             labels=labels,
-            xlim=[cfg.point_cloud_range[d] for d in [0, 3]],
-            ylim=[cfg.point_cloud_range[d] for d in [1, 4]],
+            #sxlim=[cfg.point_cloud_range[d] for d in [0, 3]],
+            #ylim=[cfg.point_cloud_range[d] for d in [1, 4]],
             classes=cfg.class_names,
         )
         # meta_data = data["img_metas"][0].data[0][0]

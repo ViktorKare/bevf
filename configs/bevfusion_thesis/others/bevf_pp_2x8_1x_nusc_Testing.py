@@ -1,7 +1,7 @@
 _base_ = [
-    '../_base_/datasets/nusc_pp_one_sweep.py',
-    '../_base_/schedules/schedule_1x.py',
-    '../_base_/default_runtime.py'
+    '../../_base_/datasets/nusc_pp_one_sweep.py',
+    '../../_base_/schedules/schedule_opt.py',
+    '../../_base_/default_runtime.py'
 ]
 final_dim=(900, 1600) # HxW
 downsample=8

@@ -14,7 +14,7 @@ from .bevf_faster_rcnn_linear import BEVF_FasterRCNN_linear
 from .bevf_faster_rcnn_element_add import BEVF_FasterRCNN_element_add
 from .bevf_faster_rcnn_encode_decode import BEVF_FasterRCNN_encode_decode
 from .bevf_faster_rcnn_encodedecode import BEVF_FasterRCNN_encodedecode
-#from .bevf_faster_rcnn_cross import BEVF_FasterRCNN_cross
+from .bevf_faster_rcnn_concat import BEVF_FasterRCNN_concat
 __all__ = [
     'Base3DDetector',
     'MVXTwoStageDetector',
@@ -31,6 +31,6 @@ __all__ = [
     'BEVF_FasterRCNN_linear',
     'BEVF_FasterRCNN_element_add',
     'BEVF_FasterRCNN_encode_decode',
-    'BEVF_FasterRCNN_encodedecode'
-    #'BEVF_FasterRCNN_cross'
+    'BEVF_FasterRCNN_encodedecode',
+    'BEVF_FasterRCNN_concat'
 ]

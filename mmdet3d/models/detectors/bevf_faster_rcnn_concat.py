@@ -13,69 +13,23 @@ from torchvision.utils import save_image
 from mmcv.cnn import ConvModule, xavier_init
 import torch.nn as nn
 
+from mmdet.models import BACKBONES
+from mmdet3d.models.backbones import SECOND
+from mmdet3d.models.necks import SECONDFPN
 
-# From https://github.com/rishikksh20/CrossViT-pytorch
-from mmdet3d.models.utils.module import CrossAttention, PreNorm
+from mmdet3d.models.builder import build_backbone, build_neck
 
 class Fusion_Block(nn.Module):
     def __init__(self, lic, imc):
         super().__init__()
-        self.imctolic1 = nn.Linear(imc, lic)
-        self.cross_attention_lic = PreNorm(lic, CrossAttention(lic, heads = 1, dim_head = lic, dropout = 0.))
-        self.lictoimc1 = nn.Linear(lic, imc)
-        self.lictolic = nn.Sequential(
-            nn.LayerNorm(lic),
-            nn.Linear(lic, lic)
-        )
-        self.lictoimc2 = nn.Linear(lic, imc)
-        self.cross_attention_imc = PreNorm(lic, CrossAttention(imc, heads = 1, dim_head = imc, dropout = 0.))
-        self.imctolic2 = nn.Linear(imc, lic)
-        self.imctolic3 = nn.Sequential(
-            nn.LayerNorm(imc),
-            nn.Linear(imc, lic)
-        )
         
-    def forward(self, lic_feats, imc_feats):
+    def forward(self, img_bev_feat, pts_feats):
 
-        lic_class = lic_feats[:, 0]
-        x_lic = lic_feats[:, 1:]
-        imc_class = imc_feats[:, 0]
-        x_imc = imc_feats[:, 1:]
-
-        #img
-        cal_q = self.imctolic1(imc_class.unsqueeze(1))
-        cal_qkv = torch.cat((cal_q, x_lic), dim=1)
-        cal_out = cal_q + self.cross_attention_lic(cal_qkv)
-        cal_out = self.lictoimc1(cal_out)
-        xlic = torch.cat((cal_out, x_lic), dim=1)
-        xlic = self.lictolic(xlic)
-
-        #lid
-        cal_q = self.lictoimc2(lic_class.unsqueeze(1))
-        cal_qkv = torch.cat((cal_q, x_imc), dim=1)
-        cal_out = cal_q + self.cross_attention_imc(cal_qkv)
-        cal_out = self.imctolic2(cal_out)
-        ximc = torch.cat((cal_out, x_imc), dim=1)
-        ximc = self.imctolic3(ximc)
-
-        feats = xlic + ximc
+        feats = torch.cat([img_bev_feat, pts_feats], dim=1)
         return feats
-    
-
-
-class SE_Block(nn.Module):
-    def __init__(self, c):
-        super().__init__()
-        self.att = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(c, c, kernel_size=1, stride=1),
-            nn.Sigmoid()
-        )
-    def forward(self, x):
-        return x * self.att(x)
-
+ 
 @DETECTORS.register_module()
-class BEVF_FasterRCNN_cross(MVXFasterRCNN):
+class BEVF_FasterRCNN_concat(MVXFasterRCNN):
     """Multi-modality BEVFusion using Faster R-CNN."""
 
     def __init__(self, lss=False, lc_fusion=False, camera_stream=False,
@@ -93,7 +47,7 @@ class BEVF_FasterRCNN_cross(MVXFasterRCNN):
             lic (int): channel dimension of LiDAR BEV feature.
 
         """
-        super(BEVF_FasterRCNN_cross, self).__init__(**kwargs)
+        super(BEVF_FasterRCNN_concat, self).__init__(**kwargs)
         self.num_views = num_views
         self.lc_fusion = lc_fusion
         self.img_depth_loss_weight = img_depth_loss_weight
@@ -105,19 +59,8 @@ class BEVF_FasterRCNN_cross(MVXFasterRCNN):
             self.lift_splat_shot_vis = LiftSplatShoot(lss=lss, grid=grid, inputC=imc, camC=64, 
             pc_range=pc_range, final_dim=final_dim, downsample=downsample)
         if lc_fusion:
-            self.seblock = SE_Block(lic)
-            if se:
-                self.fusion_block = Fusion_Block(lic+imc,512,384,lic,)
-            else:
-                self.reduc_conv = ConvModule(
-                    lic + imc,
-                    lic,
-                    3,
-                    padding=1,
-                    conv_cfg=None,
-                    norm_cfg=dict(type='BN', eps=1e-3, momentum=0.01),
-                    act_cfg=dict(type='ReLU'),
-                    inplace=False)
+            self.fusion_block = Fusion_Block(lic,imc)
+        
             
         self.freeze_img = kwargs.get('freeze_img', False)
         self.init_weights(pretrained=kwargs.get('pretrained', None))
@@ -181,23 +124,7 @@ class BEVF_FasterRCNN_cross(MVXFasterRCNN):
             if pts_feats is None:
                 pts_feats = [img_bev_feat] ####cam stream only
             else:
-                '''
-                #BEFORE I CHANGED
                 if self.lc_fusion:
-                    if img_bev_feat.shape[2:] != pts_feats[0].shape[2:]:
-                        img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
-                    pts_feats = [self.reduc_conv(torch.cat([img_bev_feat, pts_feats[0]], dim=1))]
-                    if self.se:
-                        pts_feats = [self.seblock(pts_feats[0])]
-                '''
-                if self.lc_fusion and not self.se:
-                    if img_bev_feat.shape[2:] != pts_feats[0].shape[2:]:
-                        img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
-                    pts_feats = [self.reduc_conv(torch.cat([img_bev_feat, pts_feats[0]], dim=1))]
-                    #Only one SE-block
-                    pts_feats = [self.seblock(pts_feats[0])]
-
-                if self.lc_fusion and self.se:
                     if img_bev_feat.shape[2:] != pts_feats[0].shape[2:]:
                         img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
                     pts_feats = [self.fusion_block(img_bev_feat, pts_feats[0])]
