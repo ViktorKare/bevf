@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/datasets/nusc_pp.py',
-    '../../_base_/schedules/schedule_opt.py',
+    '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
 evaluation = dict(interval=6)
