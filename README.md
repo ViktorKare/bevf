@@ -1,6 +1,9 @@
+# Towards robust sensor fusion step for 3D object detection on corrupted data
 
-This is a fork of [BEVFusion](https://github.com/ADLab-AutoDrive/BEVFusion), ([paper](https://arxiv.org/abs/2205.13790))
+Our experiments of fusion step benchmarking are done on This is a fork of BEVFusion [paper](https://arxiv.org/abs/2205.13790)
 
+**Weights**
+Weights can be found [here](https://1drv.ms/f/s!AugbFK-uh1nHkalusJWWkZ568EAcwA?e=uuuiHK).
 
 **Installation**
 
