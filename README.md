@@ -10,7 +10,7 @@ Weights can be found [here](https://1drv.ms/f/s!AugbFK-uh1nHkalusJWWkZ568EAcwA?e
 **Installation**
 
 For reference you can check out [getting_started.md](docs/getting_started.md) for installation of mmdet3d.
-To setup NuScenes mini we rename the "v1.0-mini" folder to "v1.0-trainval" before data-prep to include scene 0553 and 0796 in the validation split.
+
 ```shell
 conda create -n bevf python=3.8 -y
 conda activate bevf
@@ -29,7 +29,7 @@ pip install setuptools==59.5.0
 
 ```
 [data_preparation.md](docs/data_preparation.md) (Run with this codebase, coordinate refactoring issues can occur otherwise)
-
+To setup NuScenes mini we rename the "v1.0-mini" folder to "v1.0-trainval" before data-prep to include scene 0553 and 0796 in the validation split.
 
 **Evaluation and Training**
 ```shell
