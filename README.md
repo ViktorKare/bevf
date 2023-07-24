@@ -26,7 +26,7 @@ If required:
 ```shell
 pip install timm
 pip install setuptools==59.5.0
-
+conda install cython
 ```
 [data_preparation.md](docs/data_preparation.md) (Run with this codebase, coordinate refactoring issues can occur otherwise)
 To setup NuScenes mini we rename the "v1.0-mini" folder to "v1.0-trainval" before data-prep to include scene 0553 and 0796 in the validation split.
