@@ -12,6 +12,7 @@ from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
 from torchvision.utils import save_image
 from mmcv.cnn import ConvModule, xavier_init
 import torch.nn as nn
+
 class SE_Block(nn.Module):
     def __init__(self, c):
         super().__init__()
@@ -88,8 +89,7 @@ class BEVF_FasterRCNN(MVXFasterRCNN):
         if not self.with_pts_backbone:
             return None
         voxels, num_points, coors = self.voxelize(pts)
-        voxel_features = self.pts_voxel_encoder(voxels, num_points, coors,
-                                                )
+        voxel_features = self.pts_voxel_encoder(voxels, num_points, coors)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, coors, batch_size)
         x = self.pts_backbone(x)
@@ -216,4 +216,14 @@ class BEVF_FasterRCNN(MVXFasterRCNN):
         else:
             raise NotImplementedError
         return loss
+
+    def forward_dummy(self, input_dict):
+        """Dummy forward function."""
+        print(input_dict.keys())
+        input_dict['points'][0].data[0][0].to('cuda:0')
+        out = self.simple_test(input_dict['points'][0].data[0], input_dict['img_metas'])
+        # x = self.extract_feat(img, points)
+        # rpn_outs = self.rpn_head(x)\
+
+        return out
 

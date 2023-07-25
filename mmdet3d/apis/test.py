@@ -1,6 +1,7 @@
 import mmcv
 import torch
-
+from thop import profile
+# from .flops_counter import flops_counter
 
 def single_gpu_test(model, data_loader, show=False, out_dir=None):
     """Test model with single gpu.
@@ -26,7 +27,14 @@ def single_gpu_test(model, data_loader, show=False, out_dir=None):
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
         with torch.no_grad():
+            # data['points'] = data['points'][0].data
+            # data['points'][0][0].to('cuda:0')
+            # data['img_metas'] = data['img_metas'][0].data
+            # data['img'] = data['img'][0].data
+            # data['img'][0].to('cuda:0')
+            # macs, params = profile(model.module.to('cuda:0'), inputs=data)
             result = model(return_loss=False, rescale=True, **data)
+            
 
         if show:
             model.module.show_results(data, result, out_dir)
