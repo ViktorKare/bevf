@@ -80,6 +80,7 @@ align_mis_rots = None #[-1, 1]#Degrees
 LiDAR layer removal and Point Reduction
 
 Please, refer to the file `mmdet3d/datasets/pipelines/loading.py` and change the values accordingly. Now, the default number of LiDAR layers or percentage of points will be removed from the test/train data.  
+Note, we tested this only on nuScenes and KITTI.
 
 ```python
 """Layer reduction (beams)
