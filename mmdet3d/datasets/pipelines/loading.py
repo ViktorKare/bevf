@@ -17,8 +17,9 @@ from .loading_utils import reduce_LiDAR_beams, simulate_close_lidar_occlusions, 
 """Layer reduction (beams)
 Default 32 on NuScenes
 """
-use_reduced_beams = False
+use_reduced_beams = True
 beams = 4
+
 
 sim_close_lidar_occlusions = False
 occlusion_deg = 20
