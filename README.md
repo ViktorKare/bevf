@@ -53,6 +53,51 @@ To setup NuScenes mini we rename the "v1.0-mini" folder to "v1.0-trainval" befor
 
 ```
 
+**Evaluation of Sensor Missalignment, LiDAR layer removal and Point Reduction**
+
+Note, that it only influence the data you loaded and the saved dataset on your machine won't be affected.
+
+For Sensor Missalignment
+
+Please, refer to the file `mmdet3d/datasets/pipelines/formatting.py` and change the values accordingly. Now, the misalignments will be added to your test/train data. 
+
+Note, we only tested this on nuScenes.
+
+```python
+
+"""Misalignment
+Random noise to camera2lidar transfer matrix. Translation in xyz [m].
+Rotation in yaw [degrees].
+"""
+align_mis = False #True
+#Offset in meters, applies randomly to all cams x y z.
+align_mis_trans = None #[-0.15, 0.15]#m                 
+#Offset in degrees. 
+align_mis_rots = None #[-1, 1]#Degrees   
+
+```
+
+LiDAR layer removal and Point Reduction
+
+Please, refer to the file `mmdet3d/datasets/pipelines/loading.py` and change the values accordingly. Now, the default number of LiDAR layers or percentage of points will be removed from the test/train data.  
+
+```python
+"""Layer reduction (beams)
+Default 32 on NuScenes
+"""
+use_reduced_beams = False
+beams = 4
+
+sim_close_lidar_occlusions = False
+occlusion_deg = 20
+
+sim_missing_lidar_points = False
+percentage_of_lidar_points_to_remove = 10
+
+```
+
+
+
 ## Acknowlegement
 
 Thanks the authors of [BEVFusion-Liang](https://github.com/ADLab-AutoDrive/BEVFusion), [BEVFusion-MIT](https://github.com/mit-han-lab/bevfusion), [mmdetection3d](https://github.com/open-mmlab/mmdetection3d), [TransFusion](https://github.com/XuyangBai/TransFusion), [LSS](https://github.com/nv-tlabs/lift-splat-shoot), [CenterPoint](https://github.com/tianweiy/CenterPoint).
