@@ -1,24 +1,23 @@
 _base_ = [
     '../../_base_/datasets/nusc_pp.py',
-    '../../_base_/schedules/schedule_opt.py',
+    '../../_base_/schedules/schedule_1x.py',
     '../../_base_/default_runtime.py'
 ]
-evaluation = dict(interval=6)
-final_dim=(900, 1600) # HxW
-downsample=8
+final_dim=(450, 800) # HxW
+downsample=4
 voxel_size = [0.25, 0.25, 8]
 imc=256
 total_epochs = 6
 model = dict(
-    type='BEVF_FasterRCNN_encode_decode',
+    type='BEVF_FasterRCNN',
     freeze_img=True,
-    se=True, #False for default
+    se=False,
     lc_fusion=True,
-    camera_stream=True, 
-    grid=0.5, 
+    camera_stream=True,
+    grid=0.5,
     num_views=6,
     final_dim=final_dim,
-    downsample=downsample, 
+    downsample=downsample,
     imc=imc,
     pts_voxel_layer=dict(
         max_num_points=64,
@@ -51,35 +50,28 @@ model = dict(
         upsample_strides=[1, 2, 4],
         out_channels=[128, 128, 128]),
     img_backbone=dict(
-        type='CBSwinTransformer',
-        embed_dim=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4.,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.2,
-        ape=False,
-        patch_norm=True,
+        type='ResNet',
+        depth=50,
+        num_stages=4,
         out_indices=(0, 1, 2, 3),
-        use_checkpoint=False),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        with_cp=True,
+        style='pytorch'),
     img_neck=dict(
         type='FPNC',
         final_dim=final_dim,
-        downsample=downsample, 
-        in_channels=[96, 192, 384, 768],
+        downsample=downsample,
+        in_channels=[256, 512, 1024, 2048],
         out_channels=256,
-        outC=imc,
         use_adp=True,
         num_outs=5),
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=10,
-        in_channels=512,
-        feat_channels=512,
+        in_channels=384,
+        feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
@@ -141,18 +133,13 @@ model = dict(
             score_thr=0.05,
             min_bbox_size=0,
             max_num=500)))
-
-
 data = dict(
     samples_per_gpu=2,
     workers_per_gpu=6,)
-
 optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
                  paramwise_cfg=dict(custom_keys={'absolute_pos_embed': dict(decay_mult=0.),
                                                  'relative_position_bias_table': dict(decay_mult=0.),
                                                  'norm': dict(decay_mult=0.)}))
-
-
-load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
+# load_lift_from = 'work_dirs/bevf_pp_4x8_2x_nusc_cam_mine/latest.pth'     #####load cam stream
 load_from = 'work_dirs/pointpillars_epoch_24.pth'  #####load lidar stream
-# resume_from = 'work_dirs/bevf_pp_encode_decode_bevf_mit_style/epoch_3.pth'
+#resume_from = ''

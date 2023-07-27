@@ -8,11 +8,11 @@ final_dim=(900, 1600) # HxW
 downsample=8
 voxel_size = [0.25, 0.25, 8]
 imc=256
-total_epochs = 6
+total_epochs = 7
 model = dict(
-    type='BEVF_FasterRCNN_encode_decode',
+    type='BEVF_FasterRCNN',
     freeze_img=True,
-    se=True, #False for default
+    se=True,
     lc_fusion=True,
     camera_stream=True, 
     grid=0.5, 
@@ -78,8 +78,8 @@ model = dict(
     pts_bbox_head=dict(
         type='Anchor3DHead',
         num_classes=10,
-        in_channels=512,
-        feat_channels=512,
+        in_channels=384,
+        feat_channels=384,
         use_direction_classifier=True,
         anchor_generator=dict(
             type='AlignedAnchor3DRangeGenerator',
@@ -155,4 +155,5 @@ optimizer = dict(type='AdamW', lr=0.001, betas=(0.9, 0.999), weight_decay=0.05,
 
 load_lift_from = 'work_dirs/cam_pp.pth'     #####load cam stream
 load_from = 'work_dirs/pointpillars_epoch_24.pth'  #####load lidar stream
-# resume_from = 'work_dirs/bevf_pp_encode_decode_bevf_mit_style/epoch_3.pth'
+resume_from = 'work_dirs/bevf_liang_lr_opt.pth'
+

@@ -18,7 +18,7 @@ Rotation in yaw [degrees].
 """
 align_mis = False #True
 #Offset in meters, applies randomly to all cams x y z.
-align_mis_trans =  None #[-0.1, 0.1]#m                 
+align_mis_trans = None #[-0.15, 0.15]#m                 
 #Offset in degrees. 
 align_mis_rots = None #[-1, 1]#Degrees        
 

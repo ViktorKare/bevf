@@ -128,7 +128,7 @@ class BEVF_FasterRCNN_element_add(MVXFasterRCNN):
                         img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
                     pts_feats = [self.fusion_block(img_bev_feat, pts_feats[0])]
 
-
+        # print(f"cuda memory allocated {torch.cuda.max_memory_allocated()/1024**2} MB")
         return dict(
             img_feats = img_feats,
             pts_feats = pts_feats,

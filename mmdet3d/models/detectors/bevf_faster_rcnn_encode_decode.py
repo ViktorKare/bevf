@@ -91,8 +91,7 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
         if not self.with_pts_backbone:
             return None
         voxels, num_points, coors = self.voxelize(pts)
-        voxel_features = self.pts_voxel_encoder(voxels, num_points, coors,
-                                                )
+        voxel_features = self.pts_voxel_encoder(voxels, num_points, coors,)
         batch_size = coors[-1, 0] + 1
         x = self.pts_middle_encoder(voxel_features, coors, batch_size)
         x = self.pts_backbone(x)
@@ -114,7 +113,7 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
             for sample_idx in range(batch_size):
                 rot_list = []
                 trans_list = []
-                for mat in img_metas[sample_idx]['lidar2img']:
+                for mat in img_metas[sample_idx]['lidar2img']: # for profiling for mat in img_metas[0][sample_idx]['lidar2img']
                     mat = torch.Tensor(mat).to(img_feats_view.device)
                     rot_list.append(mat.inverse()[:3, :3])
                     trans_list.append(mat.inverse()[:3, 3].view(-1))
@@ -124,7 +123,8 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
                 trans.append(trans_list)
             rots = torch.stack(rots)
             trans = torch.stack(trans)
-            lidar2img_rt = img_metas[sample_idx]['lidar2img']  #### extrinsic parameters for multi-view images
+            #### extrinsic parameters for multi-view images
+            lidar2img_rt = img_metas[sample_idx]['lidar2img']  # for profiling img_metas[0][sample_idx]['lidar2img']
             
             img_bev_feat, depth_dist = self.lift_splat_shot_vis(img_feats_view, rots, trans, lidar2img_rt=lidar2img_rt, img_metas=img_metas)
             # print(img_bev_feat.shape, pts_feats[-1].shape)
@@ -136,7 +136,7 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
                         img_bev_feat = F.interpolate(img_bev_feat, pts_feats[0].shape[2:], mode='bilinear', align_corners=True)
                     pts_feats = [self.fusion_block(img_bev_feat, pts_feats[0])]
 
-
+        # print(f"cuda memory allocated {torch.cuda.max_memory_allocated()/1024**2} MB")
         return dict(
             img_feats = img_feats,
             pts_feats = pts_feats,
@@ -151,7 +151,7 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
         img_feats = feature_dict['img_feats']
         pts_feats = feature_dict['pts_feats'] 
         depth_dist = feature_dict['depth_dist']
-
+        # print(f"cuda memory allocated {torch.cuda.max_memory_allocated()/1024**2} MB")
         bbox_list = [dict() for i in range(len(img_metas))]
         if pts_feats and self.with_pts_bbox:
             bbox_pts = self.simple_test_pts(
@@ -164,6 +164,7 @@ class BEVF_FasterRCNN_encode_decode(MVXFasterRCNN):
                 img_feats, img_metas, rescale=rescale)
             for result_dict, img_bbox in zip(bbox_list, bbox_img):
                 result_dict['img_bbox'] = img_bbox
+        # print(f"cuda memory allocated {torch.cuda.max_memory_allocated()/1024**2} MB")
         return bbox_list
 
     def forward_train(self,

@@ -50,6 +50,22 @@ def main():
     # build the model and load checkpoint
     cfg.model.train_cfg = None
     model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    # number of params
+    print(f"model has {sum(p.numel() for p in model.parameters() if p.requires_grad)/1000000} params")
+    # param memory memory requirements 
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size() if param.requires_grad else 0
+        # element size print 
+        print(param.element_size())
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+    size_all_mb = (param_size + buffer_size) / 1024**2
+    print('model size: {:.3f}MB'.format(size_all_mb))
+    # cuda memory allocated
+    model.to('cuda:0')
+    print(f"cuda memory allocated {torch.cuda.max_memory_allocated()/1024**2} MB")
     fp16_cfg = cfg.get('fp16', None)
     # if fp16_cfg is not None:
     #     wrap_fp16_model(model)

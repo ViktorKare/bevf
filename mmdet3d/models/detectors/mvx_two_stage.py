@@ -193,8 +193,10 @@ class MVXTwoStageDetector(Base3DDetector):
             input_shape = img.shape[-2:]
             # update real input shape of each single img
             for img_meta in img_metas:
-                img_meta.update(input_shape=input_shape)
-
+                try:
+                    img_meta.update(input_shape=input_shape)
+                except:
+                    pass
             if img.dim() == 5 and img.size(0) == 1:
                 img.squeeze_(0)
             elif img.dim() == 5 and img.size(0) > 1:

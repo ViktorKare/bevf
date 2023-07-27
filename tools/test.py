@@ -15,7 +15,6 @@ from mmdet3d.models import build_detector
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description='MMDet test (and eval) a model')
